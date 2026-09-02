@@ -1,0 +1,23 @@
+#!/bin/sh
+# every executable in $PATH, one per line, into pmenu, and whatever comes back
+# out is run. pmenu itself knows nothing about programs - it filters a list -
+# so this is the half that decides the list is $PATH
+#
+# one find over every $PATH directory at once, rather than a shell loop calling
+# basename per file: that was a process per executable, 4700 of them here, and
+# three and a half seconds before the menu appeared. -printf '%f' is what
+# replaces basename. at 14ms there is nothing left worth caching
+#
+# ! -type d rather than -type f, or every executable in /usr/bin that is a
+# symlink is left out of the list
+
+IFS=:
+set -- $PATH
+
+find "$@" -maxdepth 1 ! -type d -executable -printf '%f\n' 2>/dev/null |
+  sort -u |
+  pmenu |
+  while read -r command; do
+    # setsid so the program outlives this script rather than dying with it
+    [ -n "$command" ] && setsid $command &
+  done

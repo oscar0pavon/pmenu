@@ -1,0 +1,3 @@
+pmenu
+*.o
+compile_commands.json
